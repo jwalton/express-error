@@ -3,6 +3,10 @@
   "version": "0.0.8",
   "description": "Display source code in express' error stack for JavaScript or CoffeeScript",
   "keywords": ["express3", "error", "coffee-script", "coffee"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/barc/express-error.git"
+  },
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
