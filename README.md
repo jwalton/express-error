@@ -22,8 +22,13 @@ app.configure('development', function() {
     contextLinesCount: Integer,         // Number of lines to insert before and after the error line.
     handleUncaughtException: Boolean,   // Whether to handle uncaught exception.
     title: String                       // The title for HTML error page
+    dumpException: Boolean or fn(err)   // True to dump exceptions to stderr in development mode.
 }
 ```
+
+`dumpException` defaults to true.  If true, and process.env.NODE_ENV is unset or is 'development',
+then exceptions will be printed to stderr.  If this is a function, then `dumpException(err)` will
+be called to print the exception.
 
 ## Screenshot
 

@@ -6,6 +6,9 @@ env = process.env.NODE_ENV || "development"
 HOME = process.env.HOME || process.env.USERPROFILE
 CWD = process.cwd()
 
+getType = {}
+isFunction = (obj) ->
+  return obj and getType.toString.call(obj) is '[object Function]'
 
 ##
 # Align code to left on first non-whitespace
@@ -81,7 +84,6 @@ injectSourceLines = (lines, contextLinesCount) ->
 
       # parse the error statement, getting line, code file
       if matches
-        console.log "MATCH>>", matches
         codeFile = matches[1]
 
         if codeFile.indexOf(HOME) is 0
@@ -117,16 +119,15 @@ injectSourceLines = (lines, contextLinesCount) ->
 
         try
           text = cache[codeFile]
-          unless text
-            text = FS.readFileSync(codeFile, "utf8")
-            if ext is ".js"
+          unless text?
+            if FS.existsSync codeFile
+              text = FS.readFileSync(codeFile, "utf8")
               cache[codeFile] = text
-            else if ext is ".coffee"
-              coffee = require("coffee-script")
-              text = coffee.compile(text, {})
-              cache[codeFile] = text
+            else
+              # File doesn't exist.  This will happen for node.js native files, such as 'timers.js'.
+              text = cache[codeFile] = ""
 
-          pushLine text
+          if text then pushLine text
 
         catch err
           console.log err.stack
@@ -206,14 +207,14 @@ handleUncaughtExceptions = (contextLinesCount) ->
 ##
 # Returns a function with signature compatible with express 3.
 #
-# @param {Object} options {enableUncaughtExceptions: "set to true to let this handle uncaught exceptions",
+# @param {Object} options {handleUncaughtException: "set to true to let this handle uncaught exceptions",
 #                          contextLinesCount: "the number of lines to print before and after an error line"
+#                          dumpException: "false to not print exceptions to stderr in development mode.  Defaults to true."
 #                         }
 #
 exports.express3 = (options={}) ->
-  showStack = options.showStack || false
-  dumpExceptions = options.dumpExceptions || false
-  handleUncaughtException = options.handleUncaughtException || false
+  dumpException = options.dumpException ? true
+  handleUncaughtException = options.handleUncaughtException ? false
   contextLinesCount = options.contextLinesCount || 0
   title = options.title || "express-error"
 
@@ -256,7 +257,11 @@ exports.express3 = (options={}) ->
         message: message
         stack: null
 
-    console.error formatText(newerr.stack) if env is "development"
+    if env is "development" and dumpException
+      if isFunction dumpException
+        dumpException err
+      else
+        console.error formatText(newerr.stack)
 
     # html
     if ~accept.indexOf("html")
